@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Power Dialer · DebtSolvers</title>
+<style>
+  :root {
+    --bg:#06050b; --card:rgba(255,255,255,.045); --ink:#f4f1ff; --muted:#9a93bd; --line:rgba(255,255,255,.09);
+    --brand:#7c4dff; --brand2:#c05cff; --brand-soft:rgba(124,77,255,.16);
+    --ok:#2ee59d; --ok-soft:rgba(46,229,157,.12); --warn:#ffb547; --warn-soft:rgba(255,181,71,.12); --bad:#ff5c7a; --bad-soft:rgba(255,92,122,.13);
+    --shadow:0 18px 40px rgba(0,0,0,.55);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; color:var(--ink); font:15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background:radial-gradient(1200px 600px at 15% -10%, rgba(124,77,255,.28), transparent 60%),
+               radial-gradient(900px 500px at 110% 10%, rgba(192,92,255,.18), transparent 60%),
+               radial-gradient(800px 600px at 50% 120%, rgba(46,229,157,.10), transparent 60%), #06050b; background-attachment:fixed; }
+  html { background:#06050b; }
+  main { max-width:620px; margin:0 auto; padding:18px 16px 120px; }
+
+  .hero { background:linear-gradient(135deg, #5b2be0, #9b3cff 60%, #e0479e); color:#fff; border-radius:20px; padding:18px 20px; box-shadow:var(--shadow);
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .hero h1 { margin:0; font-size:22px; letter-spacing:.2px; }
+  .hero .sub { opacity:.85; font-size:13px; }
+  .goal { min-width:180px; flex:1 1 180px; max-width:260px; }
+  .goal .lbl { font-size:12px; opacity:.9; display:flex; justify-content:space-between; }
+  .bar { height:10px; background:rgba(255,255,255,.25); border-radius:99px; overflow:hidden; margin-top:6px; }
+  .bar i { display:block; height:100%; width:0; background:#fff; border-radius:99px; transition:width .5s ease; }
+
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px; margin:14px 0; box-shadow:var(--shadow);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  .hide { display:none !important; }
+  .muted { color:var(--muted); }
+
+  .status { display:flex; align-items:center; justify-content:center; gap:10px; padding:12px 14px; border-radius:14px; font-weight:700; background:var(--brand-soft); color:#c9b6ff; text-align:center; border:1px solid var(--line); }
+  .status.live { background:var(--ok-soft); color:var(--ok); }
+  .status.ring { background:var(--warn-soft); color:var(--warn); }
+  .status.bad { background:var(--bad-soft); color:var(--bad); }
+  .dot { width:10px; height:10px; border-radius:50%; background:currentColor; flex:none; }
+  .status.ring .dot, .status.live .dot { animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 currentColor; } 70% { box-shadow:0 0 0 10px transparent; } 100% { box-shadow:0 0 0 0 transparent; } }
+
+  .lead { display:flex; align-items:center; gap:14px; margin:16px 0 4px; }
+  .avatar { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:20px; color:#fff; flex:none;
+    background:linear-gradient(135deg, var(--brand), var(--brand2)); }
+  .lead h2 { margin:0; font-size:22px; line-height:1.2; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .chip { font-size:12px; font-weight:600; padding:3px 9px; border-radius:99px; background:var(--brand-soft); color:#c9b6ff; border:1px solid rgba(124,77,255,.3); }
+  .chip.new { background:rgba(255,95,162,.14); color:#ff8cc8; border-color:rgba(255,95,162,.35); }
+  .timer { font-variant-numeric:tabular-nums; font-size:34px; font-weight:800; text-align:center; margin-top:12px; color:var(--ok); text-shadow:0 0 18px rgba(46,229,157,.55); }
+
+  .controls { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px; flex-wrap:wrap; }
+  button { font:700 15px/1 inherit; border-radius:14px; cursor:pointer; padding:13px 16px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--ink);
+    transition:transform .08s ease, box-shadow .15s ease, opacity .15s; }
+  button:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 6px 16px rgba(60,30,140,.15); }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  button:disabled { opacity:.4; cursor:default; }
+  .go { width:112px; height:112px; border-radius:50%; border:none; color:#fff; font-size:20px; letter-spacing:.5px;
+    background:radial-gradient(circle at 30% 30%, #a77bff, #5b2be0); box-shadow:0 0 0 6px rgba(124,77,255,.15), 0 0 40px rgba(124,77,255,.6); animation:glow 2.4s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow:0 0 0 10px rgba(124,77,255,.10), 0 0 60px rgba(124,77,255,.8); } }
+  .go.pause { background:radial-gradient(circle at 30% 30%, #ffc66e, #e2780b); box-shadow:0 0 0 6px rgba(255,181,71,.15), 0 0 40px rgba(255,150,40,.55); animation:none; font-size:15px; }
+  .go:not(:disabled):hover { box-shadow:0 16px 34px rgba(91,43,224,.55); }
+  .side { display:flex; flex-direction:column; gap:10px; }
+  .keys { text-align:center; font-size:12px; margin-top:12px; }
+  kbd { font:600 11px/1 inherit; border:1px solid var(--line); border-bottom-width:2px; border-radius:6px; padding:2px 6px; background:rgba(255,255,255,.06); color:var(--ink); }
+
+  .stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .stat { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; text-align:center; box-shadow:var(--shadow); backdrop-filter:blur(14px); }
+  .stat b { background:linear-gradient(135deg, #fff, #c9b6ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .stat b { display:block; font-size:26px; font-variant-numeric:tabular-nums; }
+  .stat span { font-size:12px; color:var(--muted); }
+  .stat.pop b { animation:pop .4s ease; }
+  @keyframes pop { 50% { transform:scale(1.35); color:var(--brand); } }
+
+  .next h3 { margin:0 0 10px; font-size:15px; }
+  .q { display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
+  .q:first-of-type { border-top:none; }
+  .q .avatar { width:32px; height:32px; font-size:13px; }
+  .q .nm { font-weight:600; }
+  .q .meta { font-size:12px; color:var(--muted); }
+
+  label { display:block; font-size:13px; color:var(--muted); margin:0 0 6px; }
+  input { width:100%; padding:12px; border:1px solid var(--line); border-radius:12px; font:inherit; color:inherit; background:rgba(255,255,255,.06); font-size:18px; letter-spacing:4px; text-align:center; }
+  .primary { background:linear-gradient(135deg, var(--brand), var(--brand2)); color:#fff; border:none; width:100%; margin-top:12px; }
+  .note { font-size:12px; color:var(--muted); margin-top:10px; }
+
+  .toast { position:fixed; left:50%; top:16px; transform:translateX(-50%) translateY(-250%); background:linear-gradient(135deg, #5b2be0, #c05cff); color:#fff; box-shadow:0 10px 30px rgba(124,77,255,.5); padding:10px 16px; border-radius:12px;
+    font-weight:700; transition:transform .3s ease; z-index:20; max-width:92%; text-align:center; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  canvas#fx { position:fixed; inset:0; pointer-events:none; z-index:15; }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="toast" id="toast"></div>
+<main>
+  <div class="hero">
+    <div>
+      <h1>📞 Power Dialer</h1>
+      <div class="sub" id="who">Michael · let's make some calls</div>
+    </div>
+    <div class="goal">
+      <div class="lbl"><span>Today's goal</span><span id="goalTxt">0 / 100 dials</span></div>
+      <div class="bar"><i id="goalBar"></i></div>
+    </div>
+  </div>
+
+  <div class="card" id="login">
+    <label for="pin">Team PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••">
+    <button class="primary" id="load">Load my leads</button>
+    <div class="note">The RingCentral phone in the bottom-right corner makes the calls through your headset. Sign in to it as you the first time and allow the microphone. Each lead's Monday card opens as their call starts. You only need the PIN once on this computer.</div>
+  </div>
+
+  <div id="work" class="hide">
+    <div class="card">
+      <div class="status" id="status"><span class="dot"></span><span id="statusTxt">Ready</span></div>
+      <div class="lead">
+        <div class="avatar" id="lAv">?</div>
+        <div>
+          <h2 id="lName"></h2>
+          <div class="chips" id="lChips"></div>
+        </div>
+      </div>
+      <div class="timer hide" id="timer">0:00</div>
+      <div class="controls">
+        <div class="side"><button id="skip" title="Skip (S)">⏭ Skip</button></div>
+        <button class="go" id="start" title="Start (Space)">START</button>
+        <button class="go pause hide" id="pause" title="Pause (Space)">PAUSE<br>after call</button>
+        <div class="side"><button id="hang" disabled title="Hang up & next (N)">📵 Hang up<br>&amp; next</button></div>
+      </div>
+      <div class="keys muted"><kbd>Space</kbd> start / pause &nbsp; <kbd>N</kbd> hang up &amp; next &nbsp; <kbd>S</kbd> skip</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat" id="stDials"><b id="sDials">0</b><span>Dialed today</span></div>
+      <div class="stat" id="stTalk"><b id="sTalk">0</b><span>Conversations</span></div>
+      <div class="stat"><b id="sLeft">0</b><span>Left in list</span></div>
+    </div>
+
+    <div class="card next">
+      <h3>Up next</h3>
+      <div id="next"></div>
+    </div>
+  </div>
+</main>
+<script src="https://apps.ringcentral.com/integration/ringcentral-embeddable/latest/adapter.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var API = "https://mscapital.app.n8n.cloud/webhook/";
+  var TZ = { BC:"America/Vancouver", AB:"America/Edmonton", NT:"America/Edmonton", SK:"America/Regina", MB:"America/Winnipeg", ON:"America/Toronto", QC:"America/Toronto", NU:"America/Toronto", NB:"America/Halifax", NS:"America/Halifax", PE:"America/Halifax", NL:"America/St_Johns", YT:"America/Whitehorse" };
+  var BUCKET = { new:"New lead", old:"Old lead" };
+  var MONDAY = "https://debtsolverscanadas-team.monday.com/boards/";
+  var GAP = 4, GOAL = 100;   // seconds between calls; daily dial goal for the progress bar
+  var mondayTab = null, queue = [], cur = null, wait = null, tick = null;
+  var running = false, onCall = false, answered = false, done = {}, refreshing = false, lastRefresh = 0;
+  var testPhone = (location.hash.match(/test=(\d{10})/) || [])[1];   // #test=NNNNNNNNNN dials only that number, for a test call
+
+  // per-computer memory: the PIN, and today's numbers (reset each day)
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+                set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  var today = new Date().toLocaleDateString("en-CA");
+  var stats = (function () { try { var s = JSON.parse(store.get("pd_stats") || "{}"); return s.day === today ? s : { day: today, dials: 0, talk: 0 }; } catch (e) { return { day: today, dials: 0, talk: 0 }; } })();
+  function saveStats() { store.set("pd_stats", JSON.stringify(stats)); }
+  $("pin").value = store.get("pd_pin") || "";
+
+  function api(path, body) {
+    body = body || {}; body.pin = $("pin").value;
+    return fetch(API + path, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return { ok:false, error:"Unexpected reply (" + r.status + ")" }; }); })
+      .catch(function (e) { return { ok:false, error:"Network problem: " + e.message }; });
+  }
+  // Canadian telemarketing hours in the lead's own time zone: weekdays 9:00-21:30, weekends 10:00-18:00
+  function localOk(prov) {
+    var tz = TZ[String(prov || "").toUpperCase().slice(0, 2)] || "America/Toronto";
+    var parts = new Intl.DateTimeFormat("en-CA", { timeZone: tz, weekday:"short", hour:"numeric", minute:"2-digit", hour12:false }).formatToParts(new Date());
+    var get = function (t) { return (parts.find(function (p) { return p.type === t; }) || {}).value; };
+    var mins = (Number(get("hour")) % 24) * 60 + Number(get("minute")), wd = get("weekday");
+    return (wd === "Sat" || wd === "Sun") ? mins >= 600 && mins < 1080 : mins >= 540 && mins < 1290;
+  }
+  function localTime(prov) {
+    var tz = TZ[String(prov || "").toUpperCase().slice(0, 2)] || "America/Toronto";
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz, hour:"numeric", minute:"2-digit" }).format(new Date());
+  }
+  function callable() { return queue.filter(function (l) { return !done[l.id] && localOk(l.province); }); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]; }); }
+  function initials(n) { var p = String(n || "?").trim().split(/\s+/); return ((p[0] || "?")[0] + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase(); }
+  function setStatus(t, cls) { $("statusTxt").textContent = t; $("status").className = "status " + (cls || ""); }
+  function toast(t) { var x = $("toast"); x.textContent = t; x.classList.add("show"); clearTimeout(x._t); x._t = setTimeout(function () { x.classList.remove("show"); }, 2600); }
+  function bump(id) { var el = $(id); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+
+  function renderStats() {
+    $("sDials").textContent = stats.dials; $("sTalk").textContent = stats.talk;
+    $("goalTxt").textContent = stats.dials + " / " + GOAL + " dials";
+    $("goalBar").style.width = Math.min(100, stats.dials / GOAL * 100) + "%";
+  }
+  function render() {
+    var list = callable();
+    $("sLeft").textContent = list.length;
+    var show = cur || list[0];
+    $("lAv").textContent = show ? initials(show.name) : "☕";
+    $("lName").textContent = show ? show.name : "No one to call right now";
+    $("lChips").innerHTML = show
+      ? '<span class="chip ' + (show.bucket === "new" ? "new" : "") + '">' + esc(BUCKET[show.bucket] || show.bucket) + "</span>"
+        + '<span class="chip">' + esc(show.phoneDisplay || show.phone) + "</span>"
+        + '<span class="chip">' + esc(show.province || "?") + " · " + esc(localTime(show.province)) + " their time</span>"
+        + (show.attempts ? '<span class="chip">' + show.attempts + " earlier call" + (show.attempts > 1 ? "s" : "") + "</span>" : "")
+      : '<span class="chip">New leads show up here on their own</span>';
+    var after = list.filter(function (l) { return l !== show; }).slice(0, 4);
+    $("next").innerHTML = after.map(function (l) {
+      return '<div class="q"><div class="avatar">' + esc(initials(l.name)) + '</div><div><div class="nm">' + esc(l.name) + '</div><div class="meta">'
+        + esc(BUCKET[l.bucket] || l.bucket) + " · " + esc(l.province || "?") + "</div></div></div>";
+    }).join("") || '<div class="muted">Nothing after this one 🎉</div>';
+    $("start").classList.toggle("hide", running); $("pause").classList.toggle("hide", !running);
+    $("hang").disabled = !onCall; $("skip").disabled = onCall;
+    renderStats();
+  }
+
+  function load() {
+    store.set("pd_pin", $("pin").value);
+    $("load").disabled = true; $("load").textContent = "Loading...";
+    api("pd-queue").then(function (j) {
+      $("load").disabled = false; $("load").textContent = "Load my leads";
+      if (!j.ok) { $("login").classList.remove("hide"); return toast(j.error || "Couldn't load leads"); }
+      queue = j.leads || []; lastRefresh = Date.now();
+      if (testPhone) queue = [{ id: "test", bucket: "new", name: "Test Call", phone: testPhone, phoneDisplay: testPhone, province: "ON" }];   // test mode never dials real leads
+      setInterval(function () { if (Date.now() - lastRefresh > 150000) refresh(); }, 30000);
+      $("login").classList.add("hide"); $("work").classList.remove("hide");
+      setStatus(queue.length ? "Ready when you are. Hit START 🚀" : "Ready", "");
+      render();
+    });
+  }
+  $("load").addEventListener("click", load);
+  $("pin").addEventListener("keydown", function (e) { if (e.key === "Enter") load(); });
+  if ($("pin").value) load();   // PIN remembered on this computer: go straight to the leads
+
+  // Re-read Monday in the background: new uncontacted leads go to the front, leads already dialed this session never come back,
+  // and leads moved out of New Uncontacted / Old Leads in Monday drop off.
+  function refresh() {
+    if (refreshing || testPhone) return;
+    refreshing = true; lastRefresh = Date.now();
+    api("pd-queue").then(function (j) {
+      refreshing = false;
+      if (!j.ok) return;
+      var fresh = {}; (j.leads || []).forEach(function (l) { fresh[l.id] = l; });
+      var have = {};
+      var kept = queue.filter(function (l) { return fresh[l.id]; }).map(function (l) { have[l.id] = 1; return fresh[l.id]; });
+      var added = (j.leads || []).filter(function (l) { return !have[l.id] && !done[l.id]; });
+      var addedNew = added.filter(function (l) { return l.bucket === "new"; });
+      queue = addedNew.concat(kept, added.filter(function (l) { return l.bucket !== "new"; }));
+      if (addedNew.length) toast("✨ " + addedNew.length + " fresh lead" + (addedNew.length > 1 ? "s" : "") + " jumped to the front");
+      render();
+      if (running && !onCall && !wait) dialNext();   // list was empty and new leads arrived
+    });
+  }
+
+  function openMonday(l) {
+    if (!l.boardId) return;
+    var url = MONDAY + l.boardId + "/pulses/" + l.id;
+    try {
+      if (mondayTab && !mondayTab.closed) mondayTab.location.href = url;
+      else mondayTab = window.open(url, "pd_monday");
+    } catch (e) { mondayTab = null; }
+  }
+
+  // RingCentral Embeddable: the phone lives in this page, so calls go out from Michael's line on this computer
+  var rcLoggedIn = null, callStartedAt = 0, connectedAt = 0, quickFails = 0;
+  function rcFrame() { return document.querySelector("#rc-widget-adapter-frame"); }
+  function rcSend(msg) { var f = rcFrame(); if (!f || !f.contentWindow) return false; f.contentWindow.postMessage(msg, "*"); return true; }
+  window.addEventListener("message", function (e) {
+    var d = e.data || {};
+    if (d.type === "rc-login-status-notify") { rcLoggedIn = !!d.loggedIn; if (!rcLoggedIn && running) { running = false; setStatus("Sign in to the RingCentral phone (bottom right), then hit START", "bad"); render(); } }
+    if (!onCall || !d.call) return;
+    if (String(d.call.direction || "").toLowerCase() !== "outbound") return;
+    if (d.type === "rc-call-start-notify") {
+      if (!answered) { answered = true; stats.talk++; saveStats(); bump("stTalk"); }
+      connectedAt = Date.now(); startTimer();
+      setStatus("On the call with " + cur.name, "live");
+      if (stats.talk % 5 === 0) { confetti(); toast("🔥 " + stats.talk + " conversations today!"); }
+      render();
+    } else if (d.type === "rc-call-end-notify") {
+      // a call that dies within 3 seconds twice in a row means the phone can't dial: stop instead of burning through leads
+      if (Date.now() - callStartedAt < 3000) { quickFails++; } else quickFails = 0;
+      if (quickFails >= 2) { running = false; quickFails = 0; endCall(); setStatus("Paused: calls are ending right away. Check the RingCentral phone (bottom right) is signed in and the mic is allowed.", "bad"); return; }
+      endCall();
+    }
+  });
+  function startTimer() {
+    clearInterval(tick); $("timer").classList.remove("hide");
+    var draw = function () { var s = Math.round((Date.now() - connectedAt) / 1000); $("timer").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    draw(); tick = setInterval(draw, 1000);
+  }
+  function stopTimer() { clearInterval(tick); $("timer").classList.add("hide"); }
+
+  function dialNext() {
+    clearTimeout(wait); wait = null;
+    if (!running) return render();
+    var list = callable();
+    if (!list.length) { cur = null; setStatus("All caught up ☕ Waiting for new leads or calling hours...", ""); render(); wait = setTimeout(function () { wait = null; refresh(); }, 60000); return; }
+    if (rcLoggedIn === false) { running = false; setStatus("Sign in to the RingCentral phone (bottom right) first, then hit START", "bad"); return render(); }
+    cur = list[0]; done[cur.id] = 1; answered = false;
+    openMonday(cur);
+    onCall = true; callStartedAt = Date.now();
+    if (!rcSend({ type: "rc-adapter-new-call", phoneNumber: "+1" + String(cur.phone).replace(/\D/g, "").slice(-10), toCall: true })) {
+      onCall = false; running = false; delete done[cur.id];
+      setStatus("The RingCentral phone is still loading. Give it a few seconds and hit START again.", "bad"); return render();
+    }
+    stats.dials++; saveStats(); bump("stDials");
+    if (stats.dials === GOAL) { confetti(); toast("🏆 Daily goal smashed: " + GOAL + " dials!"); }
+    else if (stats.dials % 25 === 0) { confetti(); toast("🎯 " + stats.dials + " dials today. Keep going!"); }
+    setStatus("Calling " + cur.name + "...", "ring"); render();
+    if (Date.now() - lastRefresh > 60000) refresh();
+  }
+  function endCall() {
+    onCall = false; stopTimer();
+    if (!running) { cur = null; setStatus("Paused. Hit START when you're ready.", ""); return render(); }
+    var n = GAP; setStatus("Nice. Next call in " + n + "...", "");
+    cur = null; render();
+    wait = setInterval(function () { n--; if (n > 0) return setStatus("Nice. Next call in " + n + "...", ""); clearInterval(wait); wait = null; dialNext(); }, 1000);
+  }
+
+  function start() {
+    // dialNext opens the first lead's Monday tab inside this click, so the pop-up blocker allows it;
+    // after that the same tab is just pointed at each new lead
+    running = true; dialNext();
+  }
+  function pause() {
+    running = false; clearInterval(wait); wait = null;
+    setStatus(onCall ? "Will pause after this call." : "Paused. Hit START when you're ready.", onCall ? "live" : ""); render();
+  }
+  function hangNext() {
+    if (!onCall) return;
+    rcSend({ type: "rc-adapter-control-call", callAction: "hangup" });   // its end event then moves us on
+    setTimeout(function () { if (onCall) endCall(); }, 3000);
+  }
+  function skip() {
+    if (onCall) return;
+    var l = callable()[0]; if (!l) return;
+    queue = queue.filter(function (x) { return x !== l; }); queue.push(l); toast("⏭ " + l.name + " moved to the end"); render();
+  }
+  $("start").addEventListener("click", start);
+  $("pause").addEventListener("click", pause);
+  $("hang").addEventListener("click", hangNext);
+  $("skip").addEventListener("click", skip);
+  document.addEventListener("keydown", function (e) {
+    if ($("work").classList.contains("hide") || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.code === "Space") { e.preventDefault(); running ? pause() : start(); }
+    else if (e.key === "n" || e.key === "N") hangNext();
+    else if (e.key === "s" || e.key === "S") skip();
+  });
+
+  // a little celebration for milestones
+  function confetti() {
+    var c = $("fx"), ctx = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
+    var colors = ["#5b2be0", "#9b5cff", "#ff5fa2", "#ffc83d", "#12a150"], bits = [];
+    for (var i = 0; i < 120; i++) bits.push({ x: c.width / 2, y: c.height / 3, vx: (Math.random() - .5) * 12, vy: Math.random() * -12 - 2, s: 4 + Math.random() * 5, c: colors[i % colors.length], r: Math.random() * 6 });
+    var t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      bits.forEach(function (b) { b.x += b.vx; b.y += b.vy; b.vy += .35; b.r += .2; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.r); ctx.fillStyle = b.c; ctx.fillRect(-b.s / 2, -b.s / 2, b.s, b.s * .6); ctx.restore(); });
+      if (++t < 110) requestAnimationFrame(frame); else ctx.clearRect(0, 0, c.width, c.height);
+    })();
+  }
+  renderStats();
+})();
+</script>
+</body>
+</html>
